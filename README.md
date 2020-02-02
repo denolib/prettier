@@ -1,5 +1,7 @@
 # prettier
 
+[![GitHub Actions status](https://github.com/denolib/prettier/workflows/CI/badge.svg?branch=master)](https://github.com/denolib/prettier/actions)
+
 Prettier APIs and tools for deno.
 
 This originally part of Deno standard modules. Moved here since `dprint` is now default
