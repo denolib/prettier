@@ -1,0 +1,13 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - uses: denolib/deno-action@master
+      with:
+        deno-version: 0.x
+    - run: deno run https://deno.land/std/examples/welcome.ts
