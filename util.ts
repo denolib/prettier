@@ -6,6 +6,6 @@ const { build, run } = Deno;
 export function xrun(opts: Deno.RunOptions): Deno.Process {
   return run({
     ...opts,
-    args: build.os === "win" ? ["cmd.exe", "/c", ...opts.args] : opts.args
+    cmd: build.os === "win" ? ["cmd.exe", "/c", ...opts.cmd] : opts.cmd
   });
 }

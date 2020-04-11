@@ -1,18 +1,17 @@
 // Copyright 2020 denolib maintainers. MIT license.
 // Copyright 2018-2020 the Deno authors. All rights reserved. MIT license.
 import { assertEquals } from "https://deno.land/std/testing/asserts.ts";
-import { test, runIfMain } from "https://deno.land/std/testing/mod.ts";
 import { copy, emptyDir } from "https://deno.land/std/fs/mod.ts";
 import { EOL, join } from "https://deno.land/std/path/mod.ts";
 import { xrun } from "./util.ts";
-const { readAll, execPath } = Deno;
+const { readAll, execPath, test } = Deno;
 
 const decoder = new TextDecoder();
 
 async function run(
-  args: string[]
+  cmd: string[]
 ): Promise<{ stdout: string; code: number | undefined }> {
-  const p = xrun({ args, stdout: "piped" });
+  const p = xrun({ cmd, stdout: "piped" });
 
   const stdout = decoder.decode(await readAll(p.stdout!));
   const { code } = await p.status();
@@ -397,7 +396,7 @@ test(async function testPrettierWithAutoConfig(): Promise<void> {
     const cwd = join(testdata, configName);
     const prettierFile = join(Deno.cwd(), "main.ts");
     const { stdout, stderr } = Deno.run({
-      args: [
+      cmd: [
         execPath(),
         "run",
         "--allow-read",
@@ -412,8 +411,9 @@ test(async function testPrettierWithAutoConfig(): Promise<void> {
       cwd
     });
 
-    const output = decoder.decode(await Deno.readAll(stdout));
-    const errMsg = decoder.decode(await Deno.readAll(stderr));
+    // TODO: Fix
+    const output = decoder.decode(await Deno.readAll(stdout as any));
+    const errMsg = decoder.decode(await Deno.readAll(stderr as any));
 
     assertEquals(
       errMsg
@@ -463,7 +463,7 @@ test(async function testPrettierWithSpecifiedConfig(): Promise<void> {
     const cwd = join(testdata, config.dir);
     const prettierFile = join(Deno.cwd(), "main.ts");
     const { stdout, stderr } = Deno.run({
-      args: [
+      cmd: [
         execPath(),
         "run",
         "--allow-read",
@@ -478,8 +478,9 @@ test(async function testPrettierWithSpecifiedConfig(): Promise<void> {
       cwd
     });
 
-    const output = decoder.decode(await Deno.readAll(stdout));
-    const errMsg = decoder.decode(await Deno.readAll(stderr));
+    // TODO: Fix
+    const output = decoder.decode(await Deno.readAll(stdout as any));
+    const errMsg = decoder.decode(await Deno.readAll(stderr as any));
 
     assertEquals(
       errMsg
@@ -498,7 +499,7 @@ test(async function testPrettierWithAutoIgnore(): Promise<void> {
   const cwd = join(testdata, "ignore_file");
   const prettierFile = join(Deno.cwd(), "main.ts");
   const { stdout, stderr } = Deno.run({
-    args: [
+    cmd: [
       execPath(),
       "run",
       "--allow-read",
@@ -513,10 +514,10 @@ test(async function testPrettierWithAutoIgnore(): Promise<void> {
     cwd
   });
 
-  assertEquals(decoder.decode(await Deno.readAll(stderr)), "");
+  assertEquals(decoder.decode(await Deno.readAll(stderr as any)), "");
 
   assertEquals(
-    decoder.decode(await Deno.readAll(stdout)),
+    decoder.decode(await Deno.readAll(stdout as any)),
     `console.log("typescript");\nconsole.log("typescript1");\n`
   );
 });
@@ -526,7 +527,7 @@ test(async function testPrettierWithSpecifiedIgnore(): Promise<void> {
   const cwd = join(testdata, "ignore_file");
   const prettierFile = join(Deno.cwd(), "main.ts");
   const { stdout, stderr } = Deno.run({
-    args: [
+    cmd: [
       execPath(),
       "run",
       "--allow-read",
@@ -541,12 +542,10 @@ test(async function testPrettierWithSpecifiedIgnore(): Promise<void> {
     cwd
   });
 
-  assertEquals(decoder.decode(await Deno.readAll(stderr)), "");
+  assertEquals(decoder.decode(await Deno.readAll(stderr as any)), "");
 
   assertEquals(
-    decoder.decode(await Deno.readAll(stdout)),
+    decoder.decode(await Deno.readAll(stdout as any)),
     `console.log("javascript");\nconsole.log("javascript1");\n`
   );
 });
-
-runIfMain(import.meta);
