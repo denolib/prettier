@@ -368,8 +368,8 @@ async function* getTargetFiles(
 /**
  * auto detect prettier configuration file and return config if file exist.
  */
-async function autoResolveConfig(): Promise<PrettierBuildInOptions> {
-  const configFileNamesMap = {
+async function autoResolveConfig(): Promise<PrettierBuildInOptions | undefined> {
+  const configFileNamesMap: Record<string, 1 | undefined> = {
     ".prettierrc.json": 1,
     ".prettierrc.yaml": 1,
     ".prettierrc.yml": 1,
@@ -380,11 +380,11 @@ async function autoResolveConfig(): Promise<PrettierBuildInOptions> {
     ".prettierrc.toml": 1
   };
 
-  const files = await Deno.readDir(".");
+  const files = await Deno.readdir(".");
 
   for (const f of files) {
-    if (f.isFile() && configFileNamesMap[f.name]) {
-      const c = await resolveConfig(f.name);
+    if (f.isFile() && configFileNamesMap[f.name!]) {
+      const c = await resolveConfig(f.name!);
       if (c) {
         return c;
       }
@@ -402,7 +402,7 @@ async function autoResolveConfig(): Promise<PrettierBuildInOptions> {
 async function resolveConfig(
   filepath: string
 ): Promise<PrettierBuildInOptions> {
-  let config: PrettierBuildInOptions = undefined;
+  let config: PrettierBuildInOptions | undefined = undefined;
 
   function generateError(msg: string): Error {
     return new Error(`Invalid prettier configuration file: ${msg}.`);
@@ -462,14 +462,14 @@ async function resolveConfig(
       break;
   }
 
-  return config;
+  return config!;
 }
 
 /**
  * auto detect .prettierignore and return pattern if file exist.
  */
 async function autoResolveIgnoreFile(): Promise<Set<string>> {
-  const files = await Deno.readDir(".");
+  const files = await Deno.readdir(".");
 
   for (const f of files) {
     if (f.isFile() && f.name === ".prettierignore") {
@@ -489,7 +489,7 @@ async function resolveIgnoreFile(filepath: string): Promise<Set<string>> {
   return ignore.parse(raw);
 }
 
-async function main(opts): Promise<void> {
+async function main(opts: any): Promise<void> {
   const { help, check, _: args } = opts;
 
   let prettierOpts: PrettierOptions = {
@@ -546,7 +546,11 @@ async function main(opts): Promise<void> {
 
   const files = getTargetFiles(args.length ? args : ["."], ignore);
 
-  const tty = Deno.isTTY();
+  const tty = {
+    stdout: Deno.isatty(Deno.stdout.rid),
+    stderr: Deno.isatty(Deno.stdout.rid),
+    stdin: Deno.isatty(Deno.stdout.rid)
+  };
 
   const shouldReadFromStdin =
     (!tty.stdin && (tty.stdout || tty.stderr)) || !!opts["stdin"];

@@ -1,8 +1,8 @@
 // Copyright 2020 denolib maintainers. MIT license.
 // Copyright 2018-2020 the Deno authors. All rights reserved. MIT license.
-import { test, runIfMain } from "https://deno.land/std/testing/mod.ts";
 import { assertEquals } from "https://deno.land/std/testing/asserts.ts";
 import { parse } from "./ignore.ts";
+const { test } = Deno;
 
 const testCases = [
   {
@@ -78,5 +78,3 @@ test({
     }
   }
 });
-
-runIfMain(import.meta);
