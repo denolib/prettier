@@ -29,7 +29,7 @@ import * as path from "https://deno.land/std/path/mod.ts";
 import * as toml from "https://deno.land/std/encoding/toml.ts";
 import * as yaml from "https://deno.land/std/encoding/yaml.ts";
 import * as ignore from "./ignore.ts";
-import { ExpandGlobOptions, WalkInfo, expandGlob } from "https://deno.land/std/fs/mod.ts";
+import { ExpandGlobOptions, WalkEntry, expandGlob } from "https://deno.land/std/fs/mod.ts";
 import { prettier, prettierPlugins } from "./prettier.ts";
 const { args, cwd, exit, readAll, readFile, stdin, stdout, writeFile } = Deno;
 
@@ -237,12 +237,14 @@ function selectParser(path: string): ParserLabel | null {
  * If paths are empty, then checks all the files.
  */
 async function checkSourceFiles(
-  files: AsyncIterableIterator<WalkInfo>,
+  files: AsyncIterableIterator<WalkEntry>,
   prettierOpts: PrettierOptions
 ): Promise<void> {
   const checks: Array<Promise<boolean>> = [];
 
-  for await (const { filename } of files) {
+  // TODO(eankeen): ensure this works / cleanup
+  // for await (const { filename } of files) {
+  for await (const { path: filename } of files) {
     const parser = selectParser(filename);
     if (parser) {
       checks.push(checkFile(filename, parser, prettierOpts));
@@ -265,12 +267,14 @@ async function checkSourceFiles(
  * If paths are empty, then formats all the files.
  */
 async function formatSourceFiles(
-  files: AsyncIterableIterator<WalkInfo>,
+  files: AsyncIterableIterator<WalkEntry>,
   prettierOpts: PrettierOptions
 ): Promise<void> {
   const formats: Array<Promise<void>> = [];
 
-  for await (const { filename } of files) {
+  // TODO(eankeen): ensure this works
+  // for await (const { filename } of files) {
+  for await (const { path: filename } of files) {
     const parser = selectParser(filename);
     if (parser) {
       if (prettierOpts.write) {
@@ -335,7 +339,7 @@ async function* getTargetFiles(
   include: string[],
   exclude: string[],
   root: string = cwd()
-): AsyncIterableIterator<WalkInfo> {
+): AsyncIterableIterator<WalkEntry> {
   const expandGlobOpts: ExpandGlobOptions = {
     root,
     exclude,
@@ -344,22 +348,40 @@ async function* getTargetFiles(
     globstar: true
   };
 
-  async function* expandDirectory(d: string): AsyncIterableIterator<WalkInfo> {
-    for await (const walkInfo of expandGlob("**/*", {
+  async function* expandDirectory(d: string): AsyncIterableIterator<WalkEntry> {
+    for await (const walkEntry of expandGlob("**/*", {
       ...expandGlobOpts,
       root: d,
       includeDirs: false
     })) {
-      yield walkInfo;
+      yield walkEntry;
     }
   }
 
   for (const globString of include) {
-    for await (const walkInfo of expandGlob(globString, expandGlobOpts)) {
-      if (walkInfo.info.isDirectory()) {
-        yield* expandDirectory(walkInfo.filename);
+    for await (const walkEntry of expandGlob(globString, expandGlobOpts)) {
+      // TODO(eankeen) ensure this works / cleanup
+      const isDirectory = async (filename: string): Promise<boolean> => {
+        try {
+          await Deno.stat(filename);
+          // successful, file or directory must exist
+          return true;
+        } catch (error) {
+          if (error && error.kind === Deno.errors.NotFound) {
+            // file or directory does not exist
+            return false;
+          } else {
+            // unexpected error, maybe permissions, pass it along
+            throw error;
+          }
+        }
+      };
+
+      if (await isDirectory(walkEntry.path)) {
+        // yield* expandDirectory(walkEntry.filename);
+        yield* expandDirectory(walkEntry.path)
       } else {
-        yield walkInfo;
+        yield walkEntry;
       }
     }
   }
@@ -380,8 +402,10 @@ async function autoResolveConfig(): Promise<PrettierBuildInOptions | undefined> 
     ".prettierrc.toml": 1
   };
 
-  const files = await Deno.readdir(".");
+  const files = await Deno.readDir(".");
 
+  // TODO(eankeen): remove ts-ignore
+  // @ts-ignore
   for (const f of files) {
     if (f.isFile() && configFileNamesMap[f.name!]) {
       const c = await resolveConfig(f.name!);
@@ -443,7 +467,7 @@ async function resolveConfig(
         const output = await import(
           // TODO: Remove platform condition
           // after https://github.com/denoland/deno/issues/3355 fixed
-          Deno.build.os === "win" ? "file://" + absPath : absPath
+          Deno.build.os === "windows" ? "file://" + absPath : absPath
         );
 
         if (output && output.default) {
@@ -469,8 +493,10 @@ async function resolveConfig(
  * auto detect .prettierignore and return pattern if file exist.
  */
 async function autoResolveIgnoreFile(): Promise<Set<string>> {
-  const files = await Deno.readdir(".");
+  const files = await Deno.readDir(".");
 
+  // TODO(eankeen): remove ts-ignore
+  // @ts-ignore
   for (const f of files) {
     if (f.isFile() && f.name === ".prettierignore") {
       return await resolveIgnoreFile(f.name);
