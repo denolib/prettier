@@ -242,16 +242,12 @@ async function checkSourceFiles(
 ): Promise<void> {
   const checks: Array<Promise<boolean>> = [];
 
-  // TODO(eankeen): ensure this works / cleanup
-  // for await (const { filename } of files) {
   for await (const { path: filename } of files) {
-    console.log('AAA', filename)
     const parser = selectParser(filename);
     if (parser) {
       checks.push(checkFile(filename, parser, prettierOpts));
     }
   }
-  console.log('FFF', files)
 
   const results = await Promise.all(checks);
 
@@ -274,7 +270,6 @@ async function formatSourceFiles(
 ): Promise<void> {
   const formats: Array<Promise<void>> = [];
 
-  // TODO(eankeen): ensure this works
   for await (const { path: filename } of files) {
     const parser = selectParser(filename);
     if (parser) {
@@ -387,7 +382,6 @@ async function autoResolveConfig(): Promise<PrettierBuildInOptions | undefined> 
 
   const files = await Deno.readDir(".");
 
-  // TODO(eankeen): remove ts-ignore
   for await (const f of files) {
     if (f.isFile && configFileNamesMap[f.name!]) {
       const c = await resolveConfig(f.name!);
@@ -477,7 +471,6 @@ async function resolveConfig(
 async function autoResolveIgnoreFile(): Promise<Set<string>> {
   const files = await Deno.readDir(".");
 
-  // TODO(eankeen): remove ts-ignore
   for await (const f of files) {
     if (f.isFile && f.name === ".prettierignore") {
       return await resolveIgnoreFile(f.name);

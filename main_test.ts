@@ -58,13 +58,10 @@ test({
       join(tempDir, "4.tsx"),
     ];
 
-    // TODO(eankeen): cleanup
     let p = await run([...cmd, "--check", ...files]);
-    console.log("DOO", p.stdout)
     assertEquals(p.code, 1);
     assertEquals(normalizeOutput(p.stdout), "Some files are not formatted");
 
-    console.log("FILES", files)
     p = await run([...cmd, "--write", ...files]);
     assertEquals(p.code, 0);
     assertEquals(
