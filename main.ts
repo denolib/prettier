@@ -245,11 +245,13 @@ async function checkSourceFiles(
   // TODO(eankeen): ensure this works / cleanup
   // for await (const { filename } of files) {
   for await (const { path: filename } of files) {
+    console.log('AAA', filename)
     const parser = selectParser(filename);
     if (parser) {
       checks.push(checkFile(filename, parser, prettierOpts));
     }
   }
+  console.log('FFF', files)
 
   const results = await Promise.all(checks);
 
@@ -273,7 +275,6 @@ async function formatSourceFiles(
   const formats: Array<Promise<void>> = [];
 
   // TODO(eankeen): ensure this works
-  // for await (const { filename } of files) {
   for await (const { path: filename } of files) {
     const parser = selectParser(filename);
     if (parser) {
@@ -359,26 +360,8 @@ async function* getTargetFiles(
   }
 
   for (const globString of include) {
-    for await (const walkEntry of expandGlob(globString, expandGlobOpts)) {
-      // TODO(eankeen) ensure this works / cleanup
-      const isDirectory = async (filename: string): Promise<boolean> => {
-        try {
-          await Deno.stat(filename);
-          // successful, file or directory must exist
-          return true;
-        } catch (error) {
-          if (error && error.kind === Deno.errors.NotFound) {
-            // file or directory does not exist
-            return false;
-          } else {
-            // unexpected error, maybe permissions, pass it along
-            throw error;
-          }
-        }
-      };
-
-      if (await isDirectory(walkEntry.path)) {
-        // yield* expandDirectory(walkEntry.filename);
+    for await (const walkEntry of expandGlob(globString, expandGlobOpts)) {     
+      if (walkEntry.isDirectory) {
         yield* expandDirectory(walkEntry.path)
       } else {
         yield walkEntry;
@@ -405,9 +388,8 @@ async function autoResolveConfig(): Promise<PrettierBuildInOptions | undefined> 
   const files = await Deno.readDir(".");
 
   // TODO(eankeen): remove ts-ignore
-  // @ts-ignore
-  for (const f of files) {
-    if (f.isFile() && configFileNamesMap[f.name!]) {
+  for await (const f of files) {
+    if (f.isFile && configFileNamesMap[f.name!]) {
       const c = await resolveConfig(f.name!);
       if (c) {
         return c;
@@ -496,9 +478,8 @@ async function autoResolveIgnoreFile(): Promise<Set<string>> {
   const files = await Deno.readDir(".");
 
   // TODO(eankeen): remove ts-ignore
-  // @ts-ignore
-  for (const f of files) {
-    if (f.isFile() && f.name === ".prettierignore") {
+  for await (const f of files) {
+    if (f.isFile && f.name === ".prettierignore") {
       return await resolveIgnoreFile(f.name);
     }
   }

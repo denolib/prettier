@@ -58,18 +58,21 @@ test({
       join(tempDir, "4.tsx"),
     ];
 
+    // TODO(eankeen): cleanup
     let p = await run([...cmd, "--check", ...files]);
+    console.log("DOO", p.stdout)
     assertEquals(p.code, 1);
     assertEquals(normalizeOutput(p.stdout), "Some files are not formatted");
 
+    console.log("FILES", files)
     p = await run([...cmd, "--write", ...files]);
     assertEquals(p.code, 0);
     assertEquals(
       normalizeOutput(p.stdout),
       normalizeOutput(`Formatting ${tempDir}/0.ts
-    Formatting ${tempDir}/1.js
-    Formatting ${tempDir}/3.jsx
-    Formatting ${tempDir}/4.tsx
+Formatting ${tempDir}/1.js
+Formatting ${tempDir}/3.jsx
+Formatting ${tempDir}/4.tsx
     `),
     );
 
@@ -98,9 +101,9 @@ test({
     assertEquals(
       normalizeOutput(p.stdout),
       normalizeOutput(`Formatting ${tempDir}/bar/0.ts
-    Formatting ${tempDir}/bar/1.js
-    Formatting ${tempDir}/foo/0.ts
-    Formatting ${tempDir}/foo/1.js`),
+Formatting ${tempDir}/bar/1.js
+Formatting ${tempDir}/foo/0.ts
+Formatting ${tempDir}/foo/1.js`),
     );
 
     p = await run([...cmd, "--check", ...dirs]);
@@ -129,7 +132,7 @@ test({
     assertEquals(
       normalizeSourceCode(await getSourceCode(file0)),
       `console.log(0)
-    console.log([function foo() {}, function baz() {}, a => {}])
+console.log([function foo() {}, function baz() {}, a => {}])
     `,
     );
 
@@ -145,11 +148,11 @@ test({
     assertEquals(
       normalizeSourceCode(await getSourceCode(file0)),
       `console.log(0);
-    console.log([
-        function foo() {},
-        function baz() {},
-        a => {}
-    ]);
+console.log([
+    function foo() {},
+    function baz() {},
+    a => {}
+]);
     `,
     );
 
@@ -157,11 +160,11 @@ test({
     assertEquals(
       normalizeSourceCode(await getSourceCode(file0)),
       `console.log(0);
-    console.log([
-      function foo() {},
-      function baz() {},
-      a => {}
-    ]);
+console.log([
+  function foo() {},
+  function baz() {},
+  a => {}
+]);
     `,
     );
 
@@ -184,11 +187,11 @@ test({
     assertEquals(
       normalizeSourceCode(await getSourceCode(file0)),
       `console.log(0);
-    console.log([
-      function foo() {},
-      function baz() {},
-      a => {},
-    ]);
+console.log([
+  function foo() {},
+  function baz() {},
+  a => {},
+]);
     `,
     );
 
@@ -203,7 +206,7 @@ test({
     assertEquals(
       normalizeSourceCode(await getSourceCode(file0)),
       `console.log(0);
-    console.log([function foo() {}, function baz() {}, (a) => {}]);
+console.log([function foo() {}, function baz() {}, (a) => {}]);
     `,
     );
 
